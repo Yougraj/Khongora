@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CONTENT_TYPES, type ContentType } from "@/lib/content-types";
-import { normalizePlainText, novelPlainContent } from "@/lib/plain-text";
+import { normalizePlainText } from "@/lib/plain-text";
+import AdminNovelForm, { type AdminNovelItem } from "@/app/components/AdminNovelForm";
 import { publishDateFromDoc, todayDateInputValue } from "@/lib/publish-date";
 
 type Tab = ContentType | "comments";
@@ -257,7 +258,16 @@ export default function AdminPage() {
         {message && <p className="mb-4 text-sm text-green-600">{message}</p>}
         {loading && <p className="text-sm text-[#8B8680]">Loading...</p>}
 
-        {tab !== "comments" && (
+        {tab === "novels" && (
+          <AdminNovelForm
+            items={items as unknown as AdminNovelItem[]}
+            adminFetch={adminFetch}
+            onSaved={setMessage}
+            onReload={loadData}
+          />
+        )}
+
+        {tab !== "comments" && tab !== "novels" && (
           <form onSubmit={saveItem} className="bg-white rounded-2xl p-6 mb-8 shadow-sm space-y-3">
             <h2 className="font-semibold text-[#2D2D2D]">
               {editingId ? "Edit" : "Add new"} {tab.slice(0, -1)}
@@ -363,7 +373,7 @@ export default function AdminPage() {
               </li>
             ))}
           </ul>
-        ) : (
+        ) : tab === "novels" ? null : (
           <ul className="space-y-3">
             {items.map((item) => (
               <li key={String(item._id)} className="bg-white rounded-xl p-4 shadow-sm flex justify-between gap-4">
@@ -393,9 +403,6 @@ export default function AdminPage() {
                         }
                         if (field === "content" && tab === "blogs") {
                           value = String(item.content ?? item.body ?? "");
-                        }
-                        if (field === "content" && tab === "novels") {
-                          value = novelPlainContent(item);
                         }
                         if (LONG_TEXT_FIELDS.has(field)) {
                           value = normalizePlainText(value);

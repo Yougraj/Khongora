@@ -11,10 +11,8 @@ import {
   serializeBlog,
   toId,
 } from '@/lib/serializers';
-import {
-  applyNovelPlainContent,
-  sanitizePlainTextDoc,
-} from '@/lib/plain-text';
+import { sanitizePlainTextDoc } from '@/lib/plain-text';
+import { prepareNewNovelDoc } from '@/lib/novel-episodes';
 import { applyPublishDate } from '@/lib/publish-date';
 
 const SERIALIZERS = {
@@ -68,7 +66,7 @@ export async function POST(
   }) as Record<string, unknown>;
   doc = applyPublishDate(doc, body.publishDate);
   delete doc._id;
-  if (type === 'novels') doc = applyNovelPlainContent(doc);
+  if (type === 'novels') doc = prepareNewNovelDoc(doc);
   if (type === 'blogs' && typeof doc.content === 'string') {
     doc.body = doc.content;
   }

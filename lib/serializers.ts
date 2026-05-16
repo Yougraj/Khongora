@@ -57,7 +57,6 @@ export function serializeBook(doc: Record<string, any>) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function serializeNovel(doc: Record<string, any>) {
-  const episodes = doc.episodes ?? doc.chapters ?? 1;
   const rawEpisodes = doc.episodesList ?? [
     {
       id: 1,
@@ -74,6 +73,10 @@ export function serializeNovel(doc: Record<string, any>) {
       content: normalizePlainText(ep.content ?? ''),
     })
   );
+  const episodes =
+    episodesList.length > 0
+      ? episodesList.length
+      : (doc.episodes ?? doc.chapters ?? 1);
 
   return {
     _id: toId(doc._id),

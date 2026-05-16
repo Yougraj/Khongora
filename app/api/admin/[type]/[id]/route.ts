@@ -11,10 +11,8 @@ import {
   serializeBlog,
 } from '@/lib/serializers';
 import { findById } from '@/lib/collections';
-import {
-  applyNovelPlainContent,
-  sanitizePlainTextDoc,
-} from '@/lib/plain-text';
+import { sanitizePlainTextDoc } from '@/lib/plain-text';
+import { prepareNovelUpdate } from '@/lib/novel-episodes';
 import { applyPublishDate } from '@/lib/publish-date';
 
 const SERIALIZERS = {
@@ -47,7 +45,7 @@ export async function PUT(
   if (body.publishDate) {
     update = applyPublishDate(update, body.publishDate);
   }
-  if (type === 'novels') update = applyNovelPlainContent(update);
+  if (type === 'novels') update = prepareNovelUpdate(update);
   if (type === 'blogs' && typeof update.content === 'string') {
     update.body = update.content;
   }
