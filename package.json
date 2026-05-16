@@ -1,0 +1,31 @@
+{
+  "name": "khongora",
+  "type": "module", 
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev .",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "seed": "node --env-file=.env.local --experimental-strip-types scripts/seed-db.ts",
+    "sync-author-photo": "node --env-file=.env.local --experimental-strip-types scripts/sync-author-photo.ts"
+  },
+  "dependencies": {
+    "@types/mongodb": "^4.0.6",
+    "mongodb": "^7.2.0",
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
