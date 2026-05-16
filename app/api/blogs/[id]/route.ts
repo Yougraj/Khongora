@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findById } from '@/lib/collections';
 import { serializeBlog } from '@/lib/serializers';
+import { jsonCached } from '@/lib/api-response';
 
 export async function GET(
   _request: Request,
@@ -14,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Blog post not found' }, { status: 404 });
     }
 
-    return NextResponse.json(serializeBlog(blog));
+    return jsonCached(serializeBlog(blog));
   } catch (error) {
     console.error('Blog API error:', error);
     return NextResponse.json({ error: 'Failed to fetch blog post' }, { status: 500 });

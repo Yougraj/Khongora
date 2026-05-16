@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
+import { GridSkeleton } from "../components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
+import { prefetchApi } from "@/lib/prefetch";
 
 interface BlogPost {
   _id: string;
@@ -28,27 +30,9 @@ const ArrowLeftIcon = () => (
 );
 
 export default function BlogPage() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/blogs')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then((data) => {
-        setPosts(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to load blog posts.');
-        setLoading(false);
-      });
-  }, []);
-
-  const featuredPosts = posts.filter((post) => post.featured).slice(0, 2);
+  const { data: posts, loading, error } = useJson<BlogPost[]>("/api/blogs");
+  const list = posts ?? [];
+  const featuredPosts = list.filter((post) => post.featured).slice(0, 2);
 
   return (
     <Layout>
@@ -63,19 +47,23 @@ export default function BlogPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D2D2D]" />
-          </div>
+          <GridSkeleton count={6} />
         ) : error ? (
-          <div className="text-center py-20 text-[#8B8680]">{error}</div>
+          <p className="text-center py-20 text-[#8B8680]">{error}</p>
         ) : (
         <>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           {featuredPosts.map((post) => (
-            <Link key={post._id} href={`/blog/${post._id}`} className="group">
-              <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+            <Link
+              key={post._id}
+              href={`/blog/${post._id}`}
+              prefetch
+              onMouseEnter={() => prefetchApi(`/blog/${post._id}`)}
+              className="group"
+            >
+              <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-150">
                 {post.cover ? (
-                  <img src={post.cover} alt={post.title} className="h-48 w-full object-cover" />
+                  <img src={post.cover} alt={post.title} className="h-48 w-full object-cover" loading="lazy" decoding="async" />
                 ) : (
                   <div className="h-48 bg-gradient-to-br from-[#F5F0E8] to-[#E8E2D9]" />
                 )}
@@ -97,8 +85,14 @@ export default function BlogPage() {
 
         {/* All Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post) => (
-            <Link key={post._id} href={`/blog/${post._id}`} className="group">
+          {list.map((post) => (
+            <Link
+              key={post._id}
+              href={`/blog/${post._id}`}
+              prefetch
+              onMouseEnter={() => prefetchApi(`/blog/${post._id}`)}
+              className="group"
+            >
               <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
                 {post.cover ? (
                   <img src={post.cover} alt={post.title} className="h-36 w-full object-cover" />

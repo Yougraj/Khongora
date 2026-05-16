@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jsonCached } from '@/lib/api-response';
 import { fetchLatest } from '@/lib/db-queries';
 import { getRandomComments } from '@/lib/comments';
 import { CONTENT_TYPES } from '@/lib/content-types';
@@ -18,7 +19,7 @@ export async function GET() {
       )
       .slice(0, 5);
 
-    return NextResponse.json({ latest, recentComments });
+    return jsonCached({ latest, recentComments });
   } catch (error) {
     console.error('Home API error:', error);
     return NextResponse.json({ error: 'Failed to load home' }, { status: 500 });

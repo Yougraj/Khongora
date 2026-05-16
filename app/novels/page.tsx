@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import { NovelListSkeleton } from "../components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
+import { prefetchApi } from "@/lib/prefetch";
 
 interface Episode {
   id: string;
@@ -43,26 +45,8 @@ const PlayIcon = () => (
 const PREVIEW_EPISODES = 3;
 
 export default function NovelsPage() {
-  const [novels, setNovels] = useState<Novel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/novels')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then(data => {
-        setNovels(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch novels:', err);
-        setError('Failed to load novels. Please try again.');
-        setLoading(false);
-      });
-  }, []);
+  const { data: novels, loading, error } = useJson<Novel[]>("/api/novels");
+  const list = novels ?? [];
 
   return (
     <Layout>
@@ -73,27 +57,20 @@ export default function NovelsPage() {
             <ArrowLeftIcon /> Back to Home
           </Link>
           <h1 className="text-3xl font-serif text-[#2D2D2D] mb-2">Novels</h1>
-          <p className="text-sm text-[#8B8680]">Immersive stories released episode by episode. {novels.length} novels available.</p>
+          <p className="text-sm text-[#8B8680]">
+            Immersive stories released episode by episode.
+            {novels ? ` ${list.length} novels available.` : ""}
+          </p>
         </div>
 
         {/* Novels Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D2D2D]"></div>
-          </div>
+          <NovelListSkeleton />
         ) : error ? (
-          <div className="text-center py-20 text-[#8B8680]">
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-[#2D2D2D] text-white rounded-lg text-sm"
-            >
-              Retry
-            </button>
-          </div>
+          <p className="text-center py-20 text-[#8B8680]">{error}</p>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {novels.map((novel, idx) => (
+            {list.map((novel, idx) => (
             <div key={novel._id} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow">
               <div className="flex gap-4 mb-4">
                 <div className="w-32 h-44 bg-gradient-to-b from-[#F5F0E8] to-[#E8E2D9] rounded-xl flex-shrink-0 overflow-hidden">
@@ -123,6 +100,8 @@ export default function NovelsPage() {
                   {novel.episodes > PREVIEW_EPISODES && (
                     <Link
                       href={`/novels/${novel._id}`}
+                      prefetch
+                      onMouseEnter={() => prefetchApi(`/novels/${novel._id}`)}
                       className="text-xs text-[#8B8680] hover:text-[#E85A5A]"
                     >
                       View all {novel.episodes} episodes
@@ -144,6 +123,8 @@ export default function NovelsPage() {
                       </div>
                       <Link
                         href={`/novels/${novel._id}`}
+                        prefetch
+                        onMouseEnter={() => prefetchApi(`/novels/${novel._id}`)}
                         className="text-xs text-[#E85A5A] hover:underline"
                       >
                         Read
@@ -155,7 +136,9 @@ export default function NovelsPage() {
 
               <Link
                 href={`/novels/${novel._id}`}
-                className="block w-full bg-[#2D2D2D] text-white text-center py-3 rounded-xl font-medium hover:bg-[#1A1A1A] transition-colors"
+                prefetch
+                onMouseEnter={() => prefetchApi(`/novels/${novel._id}`)}
+                className="block w-full bg-[#2D2D2D] text-white text-center py-3 rounded-xl font-medium hover:bg-[#1A1A1A] transition-colors duration-150"
               >
                 Start Reading
               </Link>

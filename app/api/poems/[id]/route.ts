@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findById } from '@/lib/collections';
 import { serializePoem } from '@/lib/serializers';
+import { jsonCached } from '@/lib/api-response';
 
 export async function GET(
   _request: Request,
@@ -14,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Poem not found' }, { status: 404 });
     }
 
-    return NextResponse.json(serializePoem(poem));
+    return jsonCached(serializePoem(poem));
   } catch (error) {
     console.error('Poem API error:', error);
     return NextResponse.json({ error: 'Failed to fetch poem' }, { status: 500 });

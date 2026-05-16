@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ContentType } from "@/lib/content-types";
+import { fetchJson, peekCache } from "@/lib/client-fetch";
 
 interface Comment {
   _id: string;
@@ -25,8 +26,13 @@ export default function CommentsSection({ contentType, contentId }: CommentsSect
   const [error, setError] = useState<string | null>(null);
 
   function loadComments() {
-    fetch(`/api/comments?contentType=${contentType}&contentId=${contentId}`)
-      .then((r) => r.json())
+    const url = `/api/comments?contentType=${contentType}&contentId=${contentId}`;
+    const cached = peekCache<Comment[]>(url);
+    if (cached) {
+      setComments(cached);
+      setLoading(false);
+    }
+    fetchJson<Comment[]>(url)
       .then((data) => setComments(Array.isArray(data) ? data : []))
       .catch(() => setComments([]))
       .finally(() => setLoading(false));

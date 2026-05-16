@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findById } from '@/lib/collections';
 import { serializeNovel } from '@/lib/serializers';
+import { jsonCached } from '@/lib/api-response';
 
 export async function GET(
   _request: Request,
@@ -14,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Novel not found' }, { status: 404 });
     }
 
-    return NextResponse.json(serializeNovel(novel));
+    return jsonCached(serializeNovel(novel));
   } catch (error) {
     console.error('Novel API error:', error);
     return NextResponse.json({ error: 'Failed to fetch novel' }, { status: 500 });

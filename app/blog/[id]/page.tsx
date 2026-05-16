@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
+import { DetailSkeleton } from "../../components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
 import ContentInteractions from "@/app/components/ContentInteractions";
 import PlainTextContent from "@/app/components/PlainTextContent";
 
@@ -32,32 +33,14 @@ const ClockIcon = () => (
 export default function BlogPostPage() {
   const params = useParams();
   const postId = params.id as string;
-  const [post, setPost] = useState<BlogDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`/api/blogs/${postId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Post not found");
-        return res.json();
-      })
-      .then((data) => {
-        setPost(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("This post could not be loaded.");
-        setLoading(false);
-      });
-  }, [postId]);
+  const { data: post, loading, error } = useJson<BlogDetail>(
+    postId ? `/api/blogs/${postId}` : null
+  );
 
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D2D2D]" />
-        </div>
+        <DetailSkeleton />
       </Layout>
     );
   }

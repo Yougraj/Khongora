@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import { GridSkeleton } from "../components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
+import { prefetchApi } from "@/lib/prefetch";
 
 interface Book {
   _id: string;
@@ -29,73 +31,63 @@ const ArrowLeftIcon = () => (
 );
 
 export default function BooksPage() {
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/books')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then(data => {
-        setBooks(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch books:', err);
-        setError('Failed to load books. Please try again.');
-        setLoading(false);
-      });
-  }, []);
+  const { data: books, loading, error } = useJson<Book[]>("/api/books");
 
   return (
     <Layout>
       <div className="max-w-6xl">
-        {/* Header */}
         <div className="mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-[#8B8680] hover:text-[#2D2D2D] mb-4 text-sm transition-colors">
+          <Link href="/" className="inline-flex items-center gap-2 text-[#8B8680] hover:text-[#2D2D2D] mb-4 text-sm transition-colors duration-150">
             <ArrowLeftIcon /> Back to Home
           </Link>
-          <h1 className="text-3xl font-serif text-[#2D2D2D] mb-2">All Books</h1>
-          <p className="text-sm text-[#8B8680]">Discover your next great read from our collection</p>
+          <h1 className="text-3xl font-serif text-[#2D2D2D] mb-2">Books</h1>
+          <p className="text-sm text-[#8B8680]">
+            Discover your next great read from our collection
+            {books ? ` · ${books.length} books` : ""}
+          </p>
         </div>
 
-        {/* Books Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D2D2D]"></div>
-          </div>
+          <GridSkeleton />
         ) : error ? (
-          <div className="text-center py-20 text-[#8B8680]">
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-[#2D2D2D] text-white rounded-lg text-sm"
-            >
-              Retry
-            </button>
-          </div>
+          <p className="text-center py-20 text-[#8B8680]">{error}</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {books.map((book) => (
-              <Link key={book._id} href={`/books/${book._id}`} className="group">
-                <div className="relative aspect-[2/3] rounded-xl overflow-hidden shadow-md group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
-                  <img 
-                    src={book.cover}
-                    alt={book.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                <h3 className="mt-3 text-sm font-medium text-[#2D2D2D] truncate">{book.title}</h3>
-                <p className="text-xs text-[#8B8680]">{book.author}</p>
-                <div className="flex items-center gap-1 text-xs text-[#A8A3A0] mt-1">
-                  <ClockIcon /> {book.readTime} • {book.chapters} ch
-                </div>
-              </Link>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {(books ?? []).map((book) => {
+              const href = `/books/${book._id}`;
+              return (
+                <Link
+                  key={book._id}
+                  href={href}
+                  prefetch
+                  onMouseEnter={() => prefetchApi(href)}
+                  className="group"
+                >
+                  <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-shadow duration-150">
+                    <div className="aspect-[3/4] bg-[#F5F0E8] overflow-hidden">
+                      <img
+                        src={book.cover}
+                        alt={book.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-medium text-[#2D2D2D] text-sm mb-1 line-clamp-2 group-hover:text-[#E85A5A] transition-colors duration-150">
+                        {book.title}
+                      </h3>
+                      <p className="text-xs text-[#8B8680] mb-2">{book.author}</p>
+                      <div className="flex items-center gap-2 text-xs text-[#A8A3A0]">
+                        <span className="flex items-center gap-1">
+                          <ClockIcon /> {book.readTime}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { fetchJson, peekCache } from "@/lib/client-fetch";
+import { prefetchApi } from "@/lib/prefetch";
 
 interface SearchResult {
   type: string;
@@ -29,17 +31,24 @@ export default function SearchBar() {
     const q = query.trim();
     if (!q) return;
 
+    const url = `/api/search?q=${encodeURIComponent(q)}`;
+    const cached = peekCache<SearchResult[]>(url);
+    if (cached) {
+      setResults(cached);
+      setOpen(true);
+      setLoading(false);
+    }
+
     const timer = setTimeout(() => {
-      setLoading(true);
-      fetch(`/api/search?q=${encodeURIComponent(q)}`)
-        .then((r) => r.json())
+      if (!cached) setLoading(true);
+      fetchJson<SearchResult[]>(url)
         .then((data) => {
           setResults(Array.isArray(data) ? data : []);
           setOpen(true);
         })
         .catch(() => setResults([]))
         .finally(() => setLoading(false));
-    }, 300);
+    }, 200);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -76,7 +85,7 @@ export default function SearchBar() {
       />
       {open && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-[#E8E2D9] overflow-hidden z-50 max-h-80 overflow-y-auto">
-          {loading && (
+          {loading && results.length === 0 && (
             <p className="p-4 text-sm text-[#8B8680] text-center">Searching...</p>
           )}
           {!loading && results.length === 0 && query.trim() && (
@@ -86,6 +95,8 @@ export default function SearchBar() {
             <Link
               key={`${item.type}-${item._id}`}
               href={item.href}
+              prefetch
+              onMouseEnter={() => prefetchApi(item.href)}
               onClick={() => {
                 setOpen(false);
                 setQuery("");

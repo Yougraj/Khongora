@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Layout from "../../components/Layout";
+import { DetailSkeleton } from "../../components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
 import ContentInteractions from "@/app/components/ContentInteractions";
 import PlainTextContent from "@/app/components/PlainTextContent";
 
@@ -52,33 +54,24 @@ const CheckIcon = () => (
 export default function NovelPage() {
   const params = useParams();
   const novelId = params.id as string;
-  const [novel, setNovel] = useState<NovelDetail | null>(null);
+  const { data: novel, loading, error } = useJson<NovelDetail>(
+    novelId ? `/api/novels/${novelId}` : null
+  );
   const [currentEpisode, setCurrentEpisode] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const episodeBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
-    fetch(`/api/novels/${novelId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Novel not found");
-        return res.json();
-      })
-      .then((data) => {
-        setNovel(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("This novel could not be loaded.");
-        setLoading(false);
-      });
-  }, [novelId]);
+    episodeBtnRefs.current[currentEpisode]?.scrollIntoView({
+      behavior: "instant",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [currentEpisode, novel?.episodesList.length]);
 
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D2D2D]" />
-        </div>
+        <DetailSkeleton />
       </Layout>
     );
   }
@@ -100,21 +93,23 @@ export default function NovelPage() {
 
   return (
     <Layout>
-      <div className="max-w-4xl">
+      <div className="max-w-4xl w-full min-w-0 overflow-x-hidden">
         <Link href="/novels" className="inline-flex items-center gap-2 text-[#8B8680] hover:text-[#2D2D2D] mb-6 text-sm transition-colors">
           <ArrowLeftIcon /> Back to Novels
         </Link>
 
-        <div className="bg-white rounded-2xl p-8 mb-6 shadow-sm">
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-32 h-44 bg-gradient-to-b from-[#F5F0E8] to-[#E8E2D9] rounded-xl flex-shrink-0 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-5 sm:p-8 mb-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-6">
+            <div className="w-28 h-40 sm:w-32 sm:h-44 mx-auto sm:mx-0 bg-gradient-to-b from-[#F5F0E8] to-[#E8E2D9] rounded-xl flex-shrink-0 flex items-center justify-center">
               <div className="w-20 h-32 bg-[#C4A882] rounded shadow-md" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0 text-center sm:text-left">
               <span className="text-xs font-medium text-[#E85A5A] uppercase tracking-wide">
                 Episode {currentEpisode + 1} of {novel.episodes}
               </span>
-              <h1 className="text-2xl font-serif font-semibold text-[#2D2D2D] mt-2 mb-1">{novel.title}</h1>
+              <h1 className="text-xl sm:text-2xl font-serif font-semibold text-[#2D2D2D] mt-2 mb-1 break-words">
+                {novel.title}
+              </h1>
               <p className="text-[#8B8680] mb-2">by {novel.author}</p>
               {episode && <p className="text-lg font-medium text-[#2D2D2D]">{episode.title}</p>}
               <div className="flex items-center gap-4 text-sm text-[#A8A3A0] mt-3">
@@ -126,45 +121,68 @@ export default function NovelPage() {
         </div>
 
         {novel.episodesList.length > 0 && (
-          <div className="bg-white rounded-xl p-4 mb-6 shadow-sm">
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-xl p-3 sm:p-4 mb-6 shadow-sm min-w-0">
+            <p className="text-xs text-[#8B8680] mb-3 sm:hidden text-center">
+              Swipe episodes · {currentEpisode + 1} of {novel.episodesList.length}
+            </p>
+            <div className="flex items-center gap-2 min-w-0">
               <button
+                type="button"
                 onClick={() => setCurrentEpisode(Math.max(0, currentEpisode - 1))}
                 disabled={currentEpisode === 0}
-                className="px-4 py-2 bg-[#F5F0E8] text-[#8B8680] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E8E2D9] transition-colors text-sm"
+                aria-label="Previous episode"
+                className="flex-shrink-0 px-2 sm:px-4 py-2 bg-[#F5F0E8] text-[#8B8680] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E8E2D9] transition-colors text-sm"
               >
-                ← Previous
+                <span className="hidden sm:inline">← Previous</span>
+                <span className="sm:hidden">←</span>
               </button>
-              <div className="flex items-center gap-2">
-                {novel.episodesList.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentEpisode(idx)}
-                    className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
-                      idx === currentEpisode
-                        ? "bg-[#E85A5A] text-white"
-                        : idx < currentEpisode
-                          ? "bg-green-100 text-green-700"
-                          : "bg-[#F5F0E8] text-[#8B8680]"
-                    }`}
-                  >
-                    {idx < currentEpisode ? <CheckIcon /> : idx + 1}
-                  </button>
-                ))}
+
+              <div className="episode-strip flex-1 min-w-0 overflow-x-auto overflow-y-hidden">
+                <div className="flex items-center gap-2 w-max px-1 py-0.5">
+                  {novel.episodesList.map((ep, idx) => (
+                    <button
+                      key={ep.id ?? idx}
+                      type="button"
+                      ref={(el) => {
+                        episodeBtnRefs.current[idx] = el;
+                      }}
+                      onClick={() => setCurrentEpisode(idx)}
+                      aria-label={`Episode ${idx + 1}${ep.title ? `: ${ep.title}` : ""}`}
+                      aria-current={idx === currentEpisode ? "true" : undefined}
+                      className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-lg text-xs font-medium transition-colors ${
+                        idx === currentEpisode
+                          ? "bg-[#E85A5A] text-white ring-2 ring-[#E85A5A]/30"
+                          : idx < currentEpisode
+                            ? "bg-green-100 text-green-700"
+                            : "bg-[#F5F0E8] text-[#8B8680]"
+                      }`}
+                    >
+                      {idx < currentEpisode ? <CheckIcon /> : idx + 1}
+                    </button>
+                  ))}
+                </div>
               </div>
+
               <button
-                onClick={() => setCurrentEpisode(Math.min(novel.episodesList.length - 1, currentEpisode + 1))}
+                type="button"
+                onClick={() =>
+                  setCurrentEpisode(
+                    Math.min(novel.episodesList.length - 1, currentEpisode + 1)
+                  )
+                }
                 disabled={currentEpisode === novel.episodesList.length - 1}
-                className="px-4 py-2 bg-[#F5F0E8] text-[#8B8680] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E8E2D9] transition-colors text-sm"
+                aria-label="Next episode"
+                className="flex-shrink-0 px-2 sm:px-4 py-2 bg-[#F5F0E8] text-[#8B8680] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#E8E2D9] transition-colors text-sm"
               >
-                Next →
+                <span className="hidden sm:inline">Next →</span>
+                <span className="sm:hidden">→</span>
               </button>
             </div>
           </div>
         )}
 
         {episode ? (
-          <article className="bg-white rounded-2xl p-8 md:p-12 shadow-sm font-serif">
+          <article className="bg-white rounded-2xl p-5 sm:p-8 md:p-12 shadow-sm font-serif min-w-0 break-words">
             <PlainTextContent text={episode.content} />
           </article>
         ) : (
@@ -175,17 +193,18 @@ export default function NovelPage() {
 
         <ContentInteractions contentType="novels" contentId={novelId} likeCount={novel.likeCount} />
 
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-8">
           <Link
             href="/novels"
-            className="px-6 py-3 bg-white rounded-xl text-[#8B8680] hover:text-[#2D2D2D] hover:shadow-md transition-all text-sm"
+            className="px-6 py-3 bg-white rounded-xl text-[#8B8680] hover:text-[#2D2D2D] hover:shadow-md transition-all text-sm text-center"
           >
             ← All Novels
           </Link>
           {currentEpisode < novel.episodesList.length - 1 && (
             <button
+              type="button"
               onClick={() => setCurrentEpisode(currentEpisode + 1)}
-              className="px-6 py-3 bg-[#2D2D2D] text-white rounded-xl hover:bg-[#1A1A1A] transition-colors flex items-center gap-2 text-sm"
+              className="px-6 py-3 bg-[#2D2D2D] text-white rounded-xl hover:bg-[#1A1A1A] transition-colors flex items-center justify-center gap-2 text-sm"
             >
               <PlayIcon /> Next Episode
             </button>

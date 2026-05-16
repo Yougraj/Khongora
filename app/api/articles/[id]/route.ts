@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { findById } from '@/lib/collections';
 import { serializeArticle } from '@/lib/serializers';
+import { jsonCached } from '@/lib/api-response';
 
 export async function GET(
   _request: Request,
@@ -14,7 +15,7 @@ export async function GET(
       return NextResponse.json({ error: 'Article not found' }, { status: 404 });
     }
 
-    return NextResponse.json(serializeArticle(article));
+    return jsonCached(serializeArticle(article));
   } catch (error) {
     console.error('Article API error:', error);
     return NextResponse.json({ error: 'Failed to fetch article' }, { status: 500 });

@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Layout from "../components/Layout";
+import { GridSkeleton } from "../components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
+import { prefetchApi } from "@/lib/prefetch";
 
 interface Poem {
   _id: string;
@@ -34,26 +37,8 @@ const HeartIcon = () => (
 
 export default function PoemsPage() {
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [poems, setPoems] = useState<Poem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/poems')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then(data => {
-        setPoems(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch poems:', err);
-        setError('Failed to load poems. Please try again.');
-        setLoading(false);
-      });
-  }, []);
+  const { data: poems, loading, error } = useJson<Poem[]>("/api/poems");
+  const list = poems ?? [];
 
   const toggleFavorite = (id: string) => {
     setFavorites(prev => 
@@ -70,27 +55,20 @@ export default function PoemsPage() {
             <ArrowLeftIcon /> Back to Home
           </Link>
           <h1 className="text-3xl font-serif text-[#2D2D2D] mb-2">Poetry Collection</h1>
-          <p className="text-sm text-[#8B8680]">Timeless verses that touch the soul. {poems.length} poems to discover.</p>
+          <p className="text-sm text-[#8B8680]">
+            Timeless verses that touch the soul.
+            {poems ? ` ${list.length} poems to discover.` : ""}
+          </p>
         </div>
 
         {/* Poems Grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D2D2D]"></div>
-          </div>
+          <GridSkeleton count={4} />
         ) : error ? (
-          <div className="text-center py-20 text-[#8B8680]">
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-[#2D2D2D] text-white rounded-lg text-sm"
-            >
-              Retry
-            </button>
-          </div>
+          <p className="text-center py-20 text-[#8B8680]">{error}</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {poems.map((poem) => (
+            {list.map((poem) => (
             <div key={poem._id} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow relative">
               <button
                 onClick={() => toggleFavorite(poem._id)}
@@ -118,7 +96,9 @@ export default function PoemsPage() {
                 </div>
                 <Link
                   href={`/poems/${poem._id}`}
-                  className="text-[#2D2D2D] font-medium hover:text-[#E85A5A] transition-colors"
+                  prefetch
+                  onMouseEnter={() => prefetchApi(`/poems/${poem._id}`)}
+                  className="text-[#2D2D2D] font-medium hover:text-[#E85A5A] transition-colors duration-150"
                 >
                   Read Full Poem →
                 </Link>

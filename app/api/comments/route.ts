@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
 import { getVisibleComments, serializeComment } from '@/lib/comments';
 import { isContentType } from '@/lib/content-types';
+import { jsonCached } from '@/lib/api-response';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const comments = await getVisibleComments(contentType, contentId);
-    return NextResponse.json(comments);
+    return jsonCached(comments, 15);
   } catch (error) {
     console.error('Comments GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });

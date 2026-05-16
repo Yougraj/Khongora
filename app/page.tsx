@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import Layout from "./components/Layout";
+import { HomeSkeleton } from "./components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
+import { prefetchApi } from "@/lib/prefetch";
 import type { ContentType } from "@/lib/content-types";
 
 interface LatestItem {
@@ -27,6 +29,11 @@ interface RecentComment {
   contentId: string;
 }
 
+interface HomeData {
+  latest: LatestItem[];
+  recentComments: RecentComment[];
+}
+
 function itemHref(item: LatestItem) {
   if (item.type === "blogs") return `/blog/${item._id}`;
   return `/${item.type}/${item._id}`;
@@ -37,20 +44,9 @@ function itemExcerpt(item: LatestItem) {
 }
 
 export default function Home() {
-  const [latest, setLatest] = useState<LatestItem[]>([]);
-  const [recentComments, setRecentComments] = useState<RecentComment[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/home")
-      .then((r) => r.json())
-      .then((data) => {
-        setLatest(data.latest ?? []);
-        setRecentComments(data.recentComments ?? []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const { data, loading, error } = useJson<HomeData>("/api/home");
+  const latest = data?.latest ?? [];
+  const recentComments = data?.recentComments ?? [];
 
   return (
     <Layout>
@@ -65,9 +61,9 @@ export default function Home() {
         </header>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin h-8 w-8 border-b-2 border-[#2D2D2D] rounded-full" />
-          </div>
+          <HomeSkeleton />
+        ) : error ? (
+          <p className="text-sm text-[#8B8680] text-center py-12">{error}</p>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
@@ -75,39 +71,45 @@ export default function Home() {
               {latest.length === 0 ? (
                 <p className="text-[#8B8680] text-sm">No content yet.</p>
               ) : (
-                latest.map((item) => (
-                  <Link
-                    key={`${item.type}-${item._id}`}
-                    href={itemHref(item)}
-                    className="flex gap-5 bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    {item.cover && (
-                      <img
-                        src={item.cover}
-                        alt=""
-                        className="w-20 h-28 object-cover rounded-lg flex-shrink-0"
-                      />
-                    )}
-                    {!item.cover && (
-                      <div className="w-20 h-28 bg-gradient-to-b from-[#F5F0E8] to-[#E8E2D9] rounded-lg flex-shrink-0 flex items-center justify-center">
-                        <span className="text-xs text-[#8B8680] uppercase">{item.type}</span>
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-medium text-[#E85A5A] uppercase">
-                        {item.type.replace(/s$/, "")} · {item.date}
-                      </span>
-                      <h3 className="font-semibold text-[#2D2D2D] mt-1 mb-1 line-clamp-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-[#8B8680] mb-2">{item.author}</p>
-                      {itemExcerpt(item) && (
-                        <p className="text-sm text-[#8B8680] line-clamp-2">{itemExcerpt(item)}</p>
+                latest.map((item) => {
+                  const href = itemHref(item);
+                  return (
+                    <Link
+                      key={`${item.type}-${item._id}`}
+                      href={href}
+                      prefetch
+                      onMouseEnter={() => prefetchApi(href)}
+                      className="flex gap-5 bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-150"
+                    >
+                      {item.cover ? (
+                        <img
+                          src={item.cover}
+                          alt=""
+                          className="w-20 h-28 object-cover rounded-lg flex-shrink-0"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <div className="w-20 h-28 bg-gradient-to-b from-[#F5F0E8] to-[#E8E2D9] rounded-lg flex-shrink-0 flex items-center justify-center">
+                          <span className="text-xs text-[#8B8680] uppercase">{item.type}</span>
+                        </div>
                       )}
-                      <p className="text-xs text-[#A8A3A0] mt-2">{item.dateRelative}</p>
-                    </div>
-                  </Link>
-                ))
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-medium text-[#E85A5A] uppercase">
+                          {item.type.replace(/s$/, "")} · {item.date}
+                        </span>
+                        <h3 className="font-semibold text-[#2D2D2D] mt-1 mb-1 line-clamp-2">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-[#8B8680] mb-2">{item.author}</p>
+                        {itemExcerpt(item) && (
+                          <p className="text-sm text-[#8B8680] line-clamp-2">{itemExcerpt(item)}</p>
+                        )}
+                        <p className="text-xs text-[#A8A3A0] mt-2">{item.dateRelative}</p>
+                      </div>
+                    </Link>
+                  );
+                })
               )}
             </div>
 
@@ -131,7 +133,6 @@ export default function Home() {
                   </ul>
                 )}
               </section>
-
             </aside>
           </div>
         )}

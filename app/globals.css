@@ -16,12 +16,27 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter {
+    animation: pageIn 0.12s ease-out;
+  }
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Serif headings using Playfair Display */
@@ -40,55 +55,15 @@ body {
   overflow: hidden;
 }
 
-/* Smooth transitions for interactive elements */
-a, button {
-  transition: all 0.2s ease-in-out;
-}
-
-/* Page transition animations - slide based on nav direction */
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-up {
-  animation: slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-.animate-slide-down {
-  animation: slideDown 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-.animate-fade-slide {
-  animation: fadeSlideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+/* Fast, limited transitions — avoid animating layout-heavy properties */
+a,
+button {
+  transition:
+    color 0.12s ease,
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    opacity 0.12s ease;
 }
 
 /* Safe area for mobile notches */
@@ -121,5 +96,16 @@ a, button {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a8906e;
+}
+
+/* Horizontal episode strip — scroll on mobile without breaking layout */
+.episode-strip {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scroll-snap-type: x mandatory;
+}
+
+.episode-strip > * {
+  scroll-snap-align: center;
 }
 

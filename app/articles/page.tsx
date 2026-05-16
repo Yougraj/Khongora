@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import { ListSkeleton } from "../components/skeletons";
+import { useJson } from "@/lib/hooks/use-json";
+import { prefetchApi } from "@/lib/prefetch";
 
 interface Article {
   _id: string;
@@ -26,26 +28,8 @@ const ArrowLeftIcon = () => (
 );
 
 export default function ArticlesPage() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch('/api/articles')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then(data => {
-        setArticles(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to fetch articles:', err);
-        setError('Failed to load articles. Please try again.');
-        setLoading(false);
-      });
-  }, []);
+  const { data: articles, loading, error } = useJson<Article[]>("/api/articles");
+  const list = articles ?? [];
 
   return (
     <Layout>
@@ -61,23 +45,19 @@ export default function ArticlesPage() {
 
         {/* Articles List */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D2D2D]"></div>
-          </div>
+          <ListSkeleton />
         ) : error ? (
-          <div className="text-center py-20 text-[#8B8680]">
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-[#2D2D2D] text-white rounded-lg text-sm"
-            >
-              Retry
-            </button>
-          </div>
+          <p className="text-center py-20 text-[#8B8680]">{error}</p>
         ) : (
           <div className="space-y-4">
-            {articles.map((article) => (
-            <Link key={article._id} href={`/articles/${article._id}`} className="group block">
+            {list.map((article) => (
+            <Link
+              key={article._id}
+              href={`/articles/${article._id}`}
+              prefetch
+              onMouseEnter={() => prefetchApi(`/articles/${article._id}`)}
+              className="group block"
+            >
               <div className="bg-white rounded-2xl p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start gap-6">
                   <div className="w-20 h-20 bg-gradient-to-br from-[#E85A5A] to-[#D44A4A] rounded-xl flex-shrink-0 flex items-center justify-center">
