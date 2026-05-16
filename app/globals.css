@@ -45,37 +45,6 @@ a, button {
   transition: all 0.2s ease-in-out;
 }
 
-/* Tab content animations */
-@keyframes tabFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes tabSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-tab-content {
-  animation: tabFadeIn 0.3s ease-out forwards;
-}
-
-.animate-tab-slide {
-  animation: tabSlideIn 0.25s ease-out forwards;
-}
-
 /* Page transition animations - slide based on nav direction */
 @keyframes slideUp {
   from {
@@ -154,18 +123,3 @@ a, button {
   background: #a8906e;
 }
 
-/* Smooth page transitions */
-.page-transition {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}

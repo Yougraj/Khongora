@@ -1,5 +1,4 @@
 import { createHmac, timingSafeEqual } from 'crypto';
-import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
 const COOKIE_NAME = 'khongora_admin';
@@ -35,12 +34,6 @@ export function verifyPassword(input: string): boolean {
   } catch {
     return false;
   }
-}
-
-export async function isAdminAuthenticated(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  return verifySessionToken(token);
 }
 
 export function verifyAdminRequest(request: NextRequest): boolean {

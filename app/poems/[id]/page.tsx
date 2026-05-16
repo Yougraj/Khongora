@@ -10,7 +10,6 @@ interface PoemDetail {
   _id: string;
   title: string;
   author: string;
-  category: string;
   year: string;
   lines: number;
   content: string;

@@ -13,7 +13,6 @@ interface ArticleDetail {
   author: string;
   date: string;
   readTime: string;
-  category: string;
   content: string;
   likeCount?: number;
 }

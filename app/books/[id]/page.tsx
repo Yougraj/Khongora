@@ -12,7 +12,6 @@ interface BookDetail {
   author: string;
   readTime: string;
   chapters: number;
-  category: string;
   description: string;
   content: string;
   cover?: string;

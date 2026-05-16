@@ -140,7 +140,7 @@ export default function NovelsPage() {
                         </div>
                       </div>
                       <Link
-                        href={`/novels/${novel._id}/episode/${episode.id}`}
+                        href={`/novels/${novel._id}`}
                         className="text-xs text-[#E85A5A] hover:underline"
                       >
                         Read

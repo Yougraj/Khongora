@@ -19,8 +19,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "ReadFlow - Keep the story going",
-  description: "Don't let the story end just yet. Continue reading your last book and immerse yourself in the world of literature.",
+  title: "Khongora",
+  description: "Books, novels, poems, articles, and essays — free to read.",
 };
 
 export const viewport = {

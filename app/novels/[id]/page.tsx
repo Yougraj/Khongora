@@ -20,7 +20,6 @@ interface NovelDetail {
   author: string;
   readTime: string;
   episodes: number;
-  category: string;
   description: string;
   episodesList: Episode[];
   likeCount?: number;

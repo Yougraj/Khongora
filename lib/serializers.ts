@@ -45,7 +45,6 @@ export function serializeBook(doc: Record<string, any>) {
     title: doc.title,
     author: doc.author,
     cover: resolveCover(doc, DEFAULT_COVER),
-    category: doc.category ?? doc.genre?.[0] ?? 'General',
     rating: doc.rating ?? 0,
     readers: doc.readers ?? doc.totalReviews ?? 0,
     readTime: doc.readTime ?? `${Math.max(1, Math.ceil(pages / 60))} hrs`,
@@ -81,7 +80,6 @@ export function serializeNovel(doc: Record<string, any>) {
     title: doc.title,
     author: doc.author,
     cover: resolveCover(doc),
-    category: doc.category ?? doc.genre?.[0] ?? 'Fiction',
     rating: doc.rating ?? 0,
     episodes,
     readTime: doc.readTime ?? `${Math.max(1, Math.ceil(episodes / 2))} hrs`,
@@ -99,7 +97,6 @@ export function serializeArticle(doc: Record<string, any>) {
     _id: toId(doc._id),
     title: doc.title,
     author: doc.author,
-    category: doc.category ?? 'General',
     readTime: doc.readTime ?? `${minutes} min`,
     excerpt: normalizePlainText(doc.excerpt ?? doc.summary ?? excerptFromText(doc.content)),
     content: normalizePlainText(doc.content ?? doc.summary ?? ''),
@@ -116,7 +113,6 @@ export function serializePoem(doc: Record<string, any>) {
     title: doc.title,
     author: doc.author,
     cover: resolveCover(doc),
-    category: doc.category ?? doc.form ?? 'Classic',
     readTime: doc.readTime ?? `${Math.max(1, Math.ceil(lineCount / 4))} min`,
     lines: lineCount,
     excerpt: doc.excerpt ?? excerptFromText(doc.content, 80),
@@ -134,27 +130,10 @@ export function serializeBlog(doc: Record<string, any>) {
     title: doc.title,
     author: doc.author,
     cover: resolveCover(doc),
-    category: doc.category ?? 'General',
     excerpt: normalizePlainText(doc.excerpt ?? excerptFromText(doc.body ?? doc.content)),
     readTime: doc.readTime ?? '5 min',
     featured: doc.featured ?? false,
     content: normalizePlainText(doc.content ?? doc.body ?? ''),
     ...metaFields(doc),
-  };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function serializeLibraryItem(doc: Record<string, any>) {
-  return {
-    id: toId(doc._id),
-    type: doc.type,
-    contentId: toId(doc.contentId),
-    title: doc.title,
-    author: doc.author,
-    progress: doc.progress ?? 0,
-    total: doc.total ?? 100,
-    lastRead: doc.lastRead ?? '',
-    status: doc.status ?? 'saved',
-    currentEpisode: doc.currentEpisode,
   };
 }

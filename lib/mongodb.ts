@@ -3,9 +3,7 @@ import { MongoClient } from 'mongodb';
 const uri = process.env.MONGODB_URI;
 
 if (!uri) {
-  throw new Error(
-    'MONGODB_URI is not defined. Add it to .env.local (see MONGODB_SETUP.md).'
-  );
+  throw new Error('MONGODB_URI is not defined. Add it to .env.local.');
 }
 
 const options = {};
@@ -27,8 +25,6 @@ if (process.env.NODE_ENV === 'development') {
   client = new MongoClient(uri, options);
   clientPromise = client.connect();
 }
-
-export default clientPromise;
 
 export async function getDb() {
   const mongoClient = await clientPromise;

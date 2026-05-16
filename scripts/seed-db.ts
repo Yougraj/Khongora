@@ -347,8 +347,6 @@ But make allowance for their doubting too...`,
     // ─────────────────────────────────────────
     // SEED ALL COLLECTIONS
     // ─────────────────────────────────────────
-    const libraryCollection = db.collection('library');
-
     const collections = [
       { name: "articles",  col: articlesCollection,  data: articlesData  },
       { name: "blogs",     col: blogsCollection,     data: blogsData     },
@@ -414,66 +412,6 @@ But make allowance for their doubting too...`,
     ];
     await db.collection("comments").insertMany(sampleComments);
     console.log(`🌱 [comments] seeded — ${sampleComments.length} documents inserted.`);
-
-    console.log("🧹 Clearing [library]...");
-    await libraryCollection.deleteMany({});
-
-    const libraryData = [
-      {
-        type: "book",
-        contentId: insertedIds.books[0],
-        title: booksData[0].title,
-        author: booksData[0].author,
-        progress: 45,
-        total: 100,
-        lastRead: "2 hours ago",
-        status: "reading",
-      },
-      {
-        type: "novel",
-        contentId: insertedIds.novels[0],
-        title: novelsData[0].title,
-        author: novelsData[0].author,
-        progress: 8,
-        total: 24,
-        lastRead: "Yesterday",
-        status: "reading",
-        currentEpisode: 2,
-      },
-      {
-        type: "poem",
-        contentId: insertedIds.poems[0],
-        title: poemsData[0].title,
-        author: poemsData[0].author,
-        progress: 100,
-        total: 100,
-        lastRead: "3 days ago",
-        status: "completed",
-      },
-      {
-        type: "blog",
-        contentId: insertedIds.blogs[0],
-        title: blogsData[0].title,
-        author: blogsData[0].author,
-        progress: 100,
-        total: 100,
-        lastRead: "2 days ago",
-        status: "completed",
-      },
-      {
-        type: "book",
-        contentId: insertedIds.books[1],
-        title: booksData[1].title,
-        author: booksData[1].author,
-        progress: 0,
-        total: 100,
-        lastRead: "Not started",
-        status: "saved",
-      },
-    ];
-
-    await libraryCollection.insertMany(libraryData);
-    console.log(`🌱 [library] seeded — ${libraryData.length} documents inserted.`);
 
     console.log("\n🎉 All collections seeded successfully!");
 
