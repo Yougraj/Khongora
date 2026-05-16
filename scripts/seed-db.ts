@@ -1,8 +1,6 @@
 import { MongoClient, ObjectId } from 'mongodb';
-import { config } from 'dotenv';
 
-config({ path: '.env.local' });
-
+/** Run via `npm run seed` (loads .env.local with --env-file). */
 const uri = process.env.MONGODB_URI;
 if (!uri) {
   console.error("❌ Error: MONGODB_URI environment variable is not defined.");
