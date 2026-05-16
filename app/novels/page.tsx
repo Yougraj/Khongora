@@ -40,8 +40,9 @@ const PlayIcon = () => (
   </svg>
 );
 
+const PREVIEW_EPISODES = 3;
+
 export default function NovelsPage() {
-  const [expandedNovel, setExpandedNovel] = useState<string | null>(null);
   const [novels, setNovels] = useState<Novel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,18 +118,20 @@ export default function NovelsPage() {
 
               {/* Episodes Preview */}
               <div className="border-t border-[#F5F0E8] pt-4 mb-4">
-                <button
-                  onClick={() => setExpandedNovel(expandedNovel === novel._id ? null : novel._id)}
-                  className="flex items-center justify-between w-full text-left"
-                >
+                <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-[#2D2D2D]">Latest Episodes</span>
-                  <span className="text-xs text-[#8B8680]">
-                    {expandedNovel === novel._id ? "Show Less" : `View All ${novel.episodes} Episodes`}
-                  </span>
-                </button>
-                
-                <div className="mt-3 space-y-2">
-                  {novel.episodesList.map((episode) => (
+                  {novel.episodes > PREVIEW_EPISODES && (
+                    <Link
+                      href={`/novels/${novel._id}`}
+                      className="text-xs text-[#8B8680] hover:text-[#E85A5A]"
+                    >
+                      View all {novel.episodes} episodes
+                    </Link>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {novel.episodesList.slice(0, PREVIEW_EPISODES).map((episode) => (
                     <div key={episode.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-[#F5F0E8]">
                       <div className="flex items-center gap-3">
                         <button className="w-8 h-8 bg-[#2D2D2D] rounded-full flex items-center justify-center text-white hover:bg-[#1A1A1A] transition-colors">
