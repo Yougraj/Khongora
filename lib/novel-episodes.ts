@@ -24,6 +24,44 @@ export function normalizeEpisodesList(raw: unknown): NovelEpisode[] {
   });
 }
 
+export function updateEpisode(
+  doc: Record<string, unknown>,
+  episodeId: number,
+  input: { title: string; duration?: string; content: string }
+): { episodesList: NovelEpisode[]; episodes: number; chapters: number } | null {
+  const list = normalizeEpisodesList(doc.episodesList);
+  const index = list.findIndex((e) => e.id === episodeId);
+  if (index === -1) return null;
+
+  list[index] = {
+    id: episodeId,
+    title: input.title.trim() || `Episode ${episodeId}`,
+    duration: input.duration?.trim() || '25 min',
+    content: normalizePlainText(input.content),
+  };
+
+  return {
+    episodesList: list,
+    episodes: list.length,
+    chapters: list.length,
+  };
+}
+
+export function deleteEpisode(
+  doc: Record<string, unknown>,
+  episodeId: number
+): { episodesList: NovelEpisode[]; episodes: number; chapters: number } | null {
+  const list = normalizeEpisodesList(doc.episodesList);
+  const next = list.filter((e) => e.id !== episodeId);
+  if (next.length === list.length) return null;
+
+  return {
+    episodesList: next,
+    episodes: next.length,
+    chapters: next.length,
+  };
+}
+
 export function appendEpisode(
   doc: Record<string, unknown>,
   input: { title: string; duration?: string; content: string }

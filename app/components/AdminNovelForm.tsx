@@ -51,11 +51,26 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newForm, setNewForm] = useState(emptyNewNovel);
   const [episodeForm, setEpisodeForm] = useState(emptyEpisode);
+  const [editingEpisodeId, setEditingEpisodeId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
   function resetEpisodeMode(novelId: string | null) {
     setSelectedNovelId(novelId);
+    setEditingEpisodeId(null);
     setEpisodeForm(emptyEpisode());
+  }
+
+  function startEditEpisode(novelId: string, ep: NovelEpisode) {
+    setEditingId(null);
+    setMode("episode");
+    setSelectedNovelId(novelId);
+    setEditingEpisodeId(ep.id);
+    setEpisodeForm({
+      publishDate: todayDateInputValue(),
+      title: ep.title,
+      duration: ep.duration,
+      content: ep.content,
+    });
   }
 
   function startEdit(item: AdminNovelItem) {
@@ -78,7 +93,13 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
     setEditingId(null);
     setMode("new");
     setSelectedNovelId(null);
+    setEditingEpisodeId(null);
     setNewForm(emptyNewNovel());
+    setEpisodeForm(emptyEpisode());
+  }
+
+  function cancelEpisodeEdit() {
+    setEditingEpisodeId(null);
     setEpisodeForm(emptyEpisode());
   }
 
@@ -113,18 +134,42 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
     }
     setSaving(true);
     try {
-      const res = await adminFetch(`/api/admin/novels/${selectedNovelId}/episodes`, {
-        method: "POST",
+      const isUpdate = editingEpisodeId !== null;
+      const url = isUpdate
+        ? `/api/admin/novels/${selectedNovelId}/episodes/${editingEpisodeId}`
+        : `/api/admin/novels/${selectedNovelId}/episodes`;
+      const res = await adminFetch(url, {
+        method: isUpdate ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(episodeForm),
       });
       if (res.ok) {
-        onSaved("Episode added!");
-        setEpisodeForm(emptyEpisode());
+        onSaved(isUpdate ? "Episode updated!" : "Episode added!");
+        cancelEpisodeEdit();
         onReload();
       } else {
         const err = await res.json().catch(() => ({}));
-        onSaved(err.error ?? "Failed to add episode");
+        onSaved(err.error ?? (isUpdate ? "Failed to update episode" : "Failed to add episode"));
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeEpisode(novelId: string, episodeId: number) {
+    if (!confirm(`Delete episode ${episodeId}?`)) return;
+    setSaving(true);
+    try {
+      const res = await adminFetch(
+        `/api/admin/novels/${novelId}/episodes/${episodeId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        onSaved("Episode deleted");
+        if (editingEpisodeId === episodeId) cancelEpisodeEdit();
+        onReload();
+      } else {
+        onSaved("Failed to delete episode");
       }
     } finally {
       setSaving(false);
@@ -284,11 +329,33 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
               <p className="text-sm font-medium text-[#2D2D2D] mb-2">
                 Episodes ({episodes.length})
               </p>
-              <ul className="space-y-2 text-sm text-[#5A5A5A]">
+              <ul className="space-y-2 text-sm">
                 {episodes.map((ep) => (
-                  <li key={ep.id}>
-                    {ep.id}. {ep.title}
-                    <span className="text-[#A8A3A0]"> · {ep.duration}</span>
+                  <li
+                    key={ep.id}
+                    className="flex items-center justify-between gap-2 py-1 border-b border-[#E8E2D9] last:border-0"
+                  >
+                    <span className="text-[#5A5A5A] min-w-0 truncate">
+                      {ep.id}. {ep.title}
+                      <span className="text-[#A8A3A0]"> · {ep.duration}</span>
+                    </span>
+                    <span className="flex gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => startEditEpisode(editingId, ep)}
+                        className="text-xs text-[#E85A5A] hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeEpisode(editingId, ep.id)}
+                        className="text-xs text-red-600 hover:underline"
+                        disabled={saving}
+                      >
+                        Delete
+                      </button>
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -331,9 +398,13 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
           onSubmit={saveEpisode}
           className="bg-white rounded-2xl p-6 shadow-sm space-y-4"
         >
-          <h2 className="font-semibold text-[#2D2D2D]">Add episode to novel</h2>
+          <h2 className="font-semibold text-[#2D2D2D]">
+            {editingEpisodeId !== null ? "Edit episode" : "Add episode to novel"}
+          </h2>
           <p className="text-xs text-[#8B8680] -mt-2">
-            Choose a novel, then add the next episode.
+            {editingEpisodeId !== null
+              ? "Update this episode’s title, duration, and content."
+              : "Choose a novel, then add the next episode."}
           </p>
 
           {items.length === 0 ? (
@@ -355,7 +426,10 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
                       <button
                         key={novel._id}
                         type="button"
-                        onClick={() => resetEpisodeMode(novel._id)}
+                        onClick={() => {
+                          if (editingEpisodeId !== null) cancelEpisodeEdit();
+                          resetEpisodeMode(novel._id);
+                        }}
                         className={`flex gap-3 p-3 rounded-xl border text-left transition-shadow ${
                           selected
                             ? "border-[#E85A5A] bg-[#FFF5F5] shadow-sm ring-1 ring-[#E85A5A]"
@@ -393,9 +467,44 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
 
               {selectedNovel && (
                 <p className="text-sm text-[#5A5A5A]">
-                  Adding episode {episodes.length + 1} to{" "}
-                  <strong className="text-[#2D2D2D]">{selectedNovel.title}</strong>
+                  {editingEpisodeId !== null ? (
+                    <>
+                      Editing episode {editingEpisodeId} of{" "}
+                      <strong className="text-[#2D2D2D]">{selectedNovel.title}</strong>
+                    </>
+                  ) : (
+                    <>
+                      Adding episode {episodes.length + 1} to{" "}
+                      <strong className="text-[#2D2D2D]">{selectedNovel.title}</strong>
+                    </>
+                  )}
                 </p>
+              )}
+
+              {selectedNovel && episodes.length > 0 && (
+                <div className="rounded-xl border border-[#E8E2D9] p-3 bg-[#FAF8F5] max-h-40 overflow-y-auto">
+                  <p className="text-xs text-[#8B8680] mb-2">Episodes in this novel</p>
+                  <ul className="space-y-1">
+                    {episodes.map((ep) => (
+                      <li key={ep.id} className="flex justify-between gap-2 text-sm">
+                        <span className="text-[#5A5A5A] truncate">
+                          {ep.id}. {ep.title}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => startEditEpisode(selectedNovel._id, ep)}
+                          className={`text-xs flex-shrink-0 ${
+                            editingEpisodeId === ep.id
+                              ? "text-[#2D2D2D] font-medium"
+                              : "text-[#E85A5A] hover:underline"
+                          }`}
+                        >
+                          {editingEpisodeId === ep.id ? "Editing" : "Edit"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
               <div>
@@ -445,13 +554,28 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={saving || !selectedNovelId}
-                className="px-6 py-2 bg-[#2D2D2D] text-white rounded-lg text-sm disabled:opacity-50"
-              >
-                {saving ? "Saving…" : "Add episode"}
-              </button>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  type="submit"
+                  disabled={saving || !selectedNovelId}
+                  className="px-6 py-2 bg-[#2D2D2D] text-white rounded-lg text-sm disabled:opacity-50"
+                >
+                  {saving
+                    ? "Saving…"
+                    : editingEpisodeId !== null
+                      ? "Save episode"
+                      : "Add episode"}
+                </button>
+                {editingEpisodeId !== null && (
+                  <button
+                    type="button"
+                    onClick={cancelEpisodeEdit}
+                    className="px-6 py-2 bg-[#F5F0E8] text-[#8B8680] rounded-lg text-sm"
+                  >
+                    Cancel edit
+                  </button>
+                )}
+              </div>
             </>
           )}
         </form>
@@ -478,9 +602,9 @@ export default function AdminNovelForm({ items, adminFetch, onSaved, onReload }:
                 <button
                   type="button"
                   onClick={() => {
-                    resetEpisodeMode(item._id);
-                    setMode("episode");
                     setEditingId(null);
+                    setMode("episode");
+                    resetEpisodeMode(item._id);
                   }}
                   className="text-xs text-[#2D2D2D] font-medium"
                 >
